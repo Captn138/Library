@@ -24,14 +24,6 @@ BEGIN
 END;
 /
 
---Trigger trig_emprunt--
-CREATE OR REPLACE TRIGGER trig_emprunt
-    BEFORE INSERT ON Detailsemprunts FOR EACH ROW
-BEGIN
-    update_etat(:new.isbn, :new.exemplaire);
-END;
-/
-
 --Update tous les Exemplaires--
 BEGIN
 FOR elem IN (SELECT * FROM Detailsemprunts) LOOP

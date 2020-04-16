@@ -278,14 +278,6 @@ BEGIN
 END;
 /
 
---Trigger trig_emprunt--
-CREATE OR REPLACE TRIGGER trig_emprunt
-    BEFORE INSERT ON Detailsemprunts FOR EACH ROW
-BEGIN
-    update_etat(:new.isbn, :new.exemplaire);
-END;
-/
-
 --Update tous les Exemplaires--
 BEGIN
 FOR elem IN (SELECT * FROM Detailsemprunts) LOOP
@@ -311,3 +303,76 @@ END;
 --Exécuter la fonction--
 SELECT fct_finValidite(1) FROM dual;
 
+--QUESTION 13--
+--Créer la fonction--
+CREATE OR REPLACE FUNCTION fct_finValidite(membreId IN number) RETURN date IS
+    limdate date;
+BEGIN
+    SELECT finAdhesion INTO limdate FROM Membres WHERE numero = membreId;
+    RETURN limdate-14;
+END;
+/
+
+--Exécuter la fonction--
+SELECT fct_finValidite(1) FROM dual;
+
+--QUESTION 15--
+--Sequence seq_emprunts--
+CREATE SEQUENCE seq_emprunts START WITH 21;
+
+--Créer la procédure--
+CREATE OR REPLACE PROCEDURE proc_empruntExpress(membre IN number, isbn IN number, exemplaire IN number) IS
+    emprunt_number number := seq_emprunts.NEXTVAL;
+BEGIN
+    INSERT INTO emprunts VALUES(emprunt_number, membre, SYSDATE, 'EC');
+    INSERT INTO Detailsemprunts VALUES(emprunt_number, '1', isbn, exemplaire, NULL);
+END;
+/
+
+--QUESTION 16--
+--Créer la fonction--
+CREATE OR REPLACE FUNCTION fct_nbOuvNonRendus(membreId IN number) RETURN number IS
+    resultat number := 0;
+    tempid number;
+BEGIN
+    FOR elem in (SELECT * FROM Detailsemprunts) LOOP
+        SELECT membre INTO tempid FROM Emprunts WHERE numero = elem.emprunt;
+        IF membreId = tempid THEN
+            IF elem.rendule IS NULL THEN
+                resultat := resultat + 1;
+            END IF;
+        END IF;
+    END LOOP;
+    return resultat;
+END;
+/
+
+--QUESTION 17--
+--Trigger trig_emprunt--
+CREATE OR REPLACE TRIGGER trig_emprunt_validite
+    BEFORE INSERT ON Emprunts FOR EACH ROW
+DECLARE
+    limdate date := fct_finValidite(:new.membre);
+BEGIN
+    IF limdate < SYSDATE THEN
+        raise_application_error(-20003, 'Adhésion du membre expirée');
+    END IF;
+END;
+/
+
+--Tester la trigger--
+EXEC proc_empruntExpress(1, 2203314168, 1);
+
+--QUESTION 18--
+--Trigger trig_modifEmprunt--
+CREATE OR REPLACE TRIGGER trig_modifEmprunt
+    BEFORE UPDATE ON Emprunts FOR EACH ROW
+DECLARE
+    oldmemberid number;
+BEGIN
+    SELECT membre INTO oldmemberid FROM Emprunts WHERE numero = :new.numero;
+    IF :new.membre != oldmemberid THEN
+        raise_application_error(-20008, 'Changement du membre non autorisée');
+    END IF;
+END;
+/
