@@ -202,7 +202,7 @@ insert into Detailsemprunts values('20', '2', '2253010219', '1', NULL);
 ----------insert into ouvrages values ('2080703234', 'Cinq semaines en ballon', 'Jules Verne', 'ROM', 'Flammarion');
 
 --QUESTION 6--
---Add row--
+--Add Column--
 ALTER TABLE Emprunts ADD(etat char(2) default ('EC'));
 
 --QUESTION 7--
@@ -303,18 +303,21 @@ END;
 --Exécuter la fonction--
 SELECT fct_finValidite(1) FROM dual;
 
---QUESTION 13--
+--QUESTION 14--
 --Créer la fonction--
-CREATE OR REPLACE FUNCTION fct_finValidite(membreId IN number) RETURN date IS
-    limdate date;
+CREATE OR REPLACE FUNCTION fct_mesureActivite(f_period in number)RETURN number AS memberId number;
 BEGIN
-    SELECT finAdhesion INTO limdate FROM Membres WHERE numero = membreId;
-    RETURN limdate-14;
+    SELECT (
+        SELECT Membre FROM (
+            SELECT Membre, count() FROM Emprunts
+            WHERE creele >= ADD_MONTHS(sysdate, - f_period)
+            GROUP BY Membre
+            ORDER BY count() DESC)
+        WHERE rownum=1)
+    INTO memberId FROM dual;
+    return memberId;
 END;
 /
-
---Exécuter la fonction--
-SELECT fct_finValidite(1) FROM dual;
 
 --QUESTION 15--
 --Sequence seq_emprunts--
@@ -374,5 +377,22 @@ BEGIN
     IF :new.membre != oldmemberid THEN
         raise_application_error(-20008, 'Changement du membre non autorisée');
     END IF;
+END;
+/
+
+--QUESTION 19--
+--Trigger trig_emprunt--
+CREATE OR REPLACE TRIGGER trig_etat
+    AFTER INSERT ON Detailsemprunts FOR EACH ROW
+BEGIN
+    update_etat(:new.isbn, :new.exemplaire);
+END;
+/
+
+--Trigger trig_maj--
+CREATE OR REPLACE TRIGGER trig_maj
+    AFTER INSERT ON Exemplaires FOR EACH ROW
+BEGIN
+    update_etat(:new.isbn, :new.numero);
 END;
 /
