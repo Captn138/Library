@@ -201,6 +201,9 @@ insert into Detailsemprunts values('20', '2', '2253010219', '1', NULL);
 --Inserting--
 ----------insert into ouvrages values ('2080703234', 'Cinq semaines en ballon', 'Jules Verne', 'ROM', 'Flammarion');
 
+--Cette ligne est déjà présente dans les valeurs de base, si nous l'ajoutons, nous crééons une erreur
+
+
 --QUESTION 6--
 --Add Column--
 ALTER TABLE Emprunts ADD(etat char(2) default ('EC'));
@@ -305,15 +308,19 @@ SELECT fct_finValidite(1) FROM dual;
 
 --QUESTION 14--
 --Créer la fonction--
-CREATE OR REPLACE FUNCTION fct_mesureActivite(f_period in number)RETURN number AS memberId number;
+CREATE OR REPLACE FUNCTION fct_mesureActivite(periode IN number)RETURN number AS memberId number;
 BEGIN
     SELECT (
-        SELECT Membre FROM (
-            SELECT Membre, count() FROM Emprunts
-            WHERE creele >= ADD_MONTHS(sysdate, - f_period)
+        SELECT Membre
+        FROM (
+            SELECT Membre, count(*)
+            FROM Emprunts
+            WHERE creele >= ADD_MONTHS(sysdate, - periode)
             GROUP BY Membre
-            ORDER BY count() DESC)
-        WHERE rownum=1)
+            ORDER BY count(*) DESC
+        )
+        WHERE rownum=1
+    )
     INTO memberId FROM dual;
     return memberId;
 END;
