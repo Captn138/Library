@@ -1,7 +1,7 @@
 # Projet Pl/SQL : Library
 
 ## Composition des fichiers
-Vous trouverez dans le dossier source, les fichiers séparés pour chaque question de projet.
+Vous trouverez dans le dossier 'sources', les fichiers séparés pour chaque question de projet.
 
 Vous provez simplement exécuter le code 'project.sql' qui n'est qu'un copier/coller de tous les fichiers du projet.
 
