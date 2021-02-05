@@ -1,5 +1,5 @@
-# Projet Pl/SQL : Library
-
+# Library
+Pl/SQL Project - 3A-S2 (2020)
 ## Composition des fichiers
 Vous trouverez dans le dossier 'sources', les fichiers séparés pour chaque question de projet.
 
